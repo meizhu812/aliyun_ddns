@@ -1,0 +1,11 @@
+{
+  "acs_conf": {
+    "ak": "",
+    "secret": ""
+  },
+  "ddns_conf": {
+    "RecordId": "",
+    "Type": "A",
+    "RR": "www"
+  }
+}
