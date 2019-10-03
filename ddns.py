@@ -7,7 +7,7 @@ from aliyunsdkalidns.request.v20150109.DescribeDomainRecordInfoRequest import De
 from aliyunsdkalidns.request.v20150109.UpdateDomainRecordRequest import UpdateDomainRecordRequest
 from aliyunsdkcore.client import AcsClient
 
-
+DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 def load_configs():
     with open('conf.json', 'r') as f:
         configs = load(f)
@@ -49,7 +49,7 @@ def attempt(max_retries, ddns_conf):
 
                 return 0, previous_ddns_ip
         except Exception as e:
-            print('[{}] Some error occurred ({})'.format(datetime.today().strftime('%Y-%m-%d %H:%M:%S'), str(e)))
+            print('[{}] Some error occurred ({})'.format(datetime.today().strftime(DATETIME_FORMAT), str(e)))
             sleep(t_retry)
             t_retry *= 2
             retries += 1
@@ -58,13 +58,16 @@ def attempt(max_retries, ddns_conf):
 
 _acs_conf, _ddns_conf = load_configs()
 client = AcsClient(**_acs_conf)
+timesUnchanged = 0
 while True:
-
     code, _ip = attempt(5, _ddns_conf)
     if code == -1:
-        print('[{}] Possible Connection Error'.format(datetime.today().strftime('%Y-%m-%d %H:%M:%S')))
+        print('[{}] Possible Connection Error'.format(datetime.today().strftime(DATETIME_FORMAT)))
     elif code == 1:
-        print('[{}] IP [{}] => [{}]'.format(datetime.today().strftime('%Y-%m-%d %H:%M:%S'), _ip[0], _ip[1]))
+        print('[{}] IP [{}] => [{}]'.format(datetime.today().strftime(DATETIME_FORMAT), _ip[0], _ip[1]))
+        timesUnchanged = 0
     elif code == 0:
-        print('[{}] IP [{}] Unchanged.'.format(datetime.today().strftime('%Y-%m-%d %H:%M:%S'), _ip), end='\r')
+        timesUnchanged += 1
+        print(80 * '', end='\r')  # cl
+        print('[{}] IP [{}] Unchanged({}).'.format(datetime.today().strftime(DATETIME_FORMAT), _ip,timesUnchanged), end='\r')
     sleep(300)
