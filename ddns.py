@@ -8,6 +8,8 @@ from aliyunsdkalidns.request.v20150109.UpdateDomainRecordRequest import UpdateDo
 from aliyunsdkcore.client import AcsClient
 
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+
+
 def load_configs():
     with open('conf.json', 'r') as f:
         configs = load(f)
@@ -37,7 +39,7 @@ def attempt(max_retries, ddns_conf):
     retries = 0
     while retries < max_retries:
         try:
-            current_ip = urlopen('http://ip.42.pl/raw').read().decode()
+            current_ip = urlopen('http://ip.42.pl/raw', timeout=10).read().decode()
             previous_ddns_ip = get_ddns_ip(ddns_conf['RecordId'])
             if current_ip != previous_ddns_ip:
                 update_ddns_ip(current_ip, ddns_conf['Type'], ddns_conf['RR'], ddns_conf['RecordId'])
@@ -48,8 +50,8 @@ def attempt(max_retries, ddns_conf):
             else:
 
                 return 0, previous_ddns_ip
-        except Exception as e:
-            print('[{}] Some error occurred ({})'.format(datetime.today().strftime(DATETIME_FORMAT), str(e)))
+        except Exception:  # ignore exception type which is irrelevant
+            print('\n[{}] Some error occurred.\n'.format(datetime.today().strftime(DATETIME_FORMAT)))
             sleep(t_retry)
             t_retry *= 2
             retries += 1
@@ -68,6 +70,10 @@ while True:
         timesUnchanged = 0
     elif code == 0:
         timesUnchanged += 1
-        print(80 * '', end='\r')  # cl
-        print('[{}] IP [{}] Unchanged({}).'.format(datetime.today().strftime(DATETIME_FORMAT), _ip,timesUnchanged), end='\r')
+        if timesUnchanged == 1:
+            print('[{}] IP [{}] Unchanged.'.format(datetime.today().strftime(DATETIME_FORMAT), _ip))
+        else:
+            print(80 * '', end='\r')  # cl
+            print('[{}] IP [{}] Still Unchanged({}).'.format(
+                datetime.today().strftime(DATETIME_FORMAT), _ip, timesUnchanged), end='\r')
     sleep(300)
